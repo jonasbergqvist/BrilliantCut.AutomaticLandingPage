@@ -80,7 +80,7 @@ namespace BrilliantCut.AutomaticLandingPage
                 return;
             }
 
-            var value = facetNames.FirstOrDefault(x => x.FacetName == nextSegment);
+            var value = facetNames.FirstOrDefault(x => x.FacetName.Equals(nextSegment, StringComparison.OrdinalIgnoreCase));
             if (value != null)
             {
                 currentFacet = value;
