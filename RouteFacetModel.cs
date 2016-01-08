@@ -16,7 +16,7 @@ namespace BrilliantCut.AutomaticLandingPage
 
         public bool Equals(RouteFacetModel other)
         {
-            return FacetName.Equals(other.FacetName);
+            return FacetName.Equals(other.FacetName, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

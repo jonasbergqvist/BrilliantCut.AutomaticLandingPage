@@ -62,7 +62,7 @@ namespace BrilliantCut.AutomaticLandingPage
                 }
             }
 
-            var model = routeFacets.Select(x => x.Key).SingleOrDefault(x => x.FacetName == facetKey);
+            var model = routeFacets.Select(x => x.Key).SingleOrDefault(x => x.FacetName.Equals(facetKey, StringComparison.OrdinalIgnoreCase));
             if (model != null)
             {
                 routeFacets[model].Add(facetValue);
@@ -116,7 +116,7 @@ namespace BrilliantCut.AutomaticLandingPage
 
         internal string GetFacetValue(IEnumerable<RouteFacetModel> facetNames, string originalName)
         {
-            var possibleProblems = facetNames.Where(x => x.FacetName.EndsWith(originalName));
+            var possibleProblems = facetNames.Where(x => x.FacetName.EndsWith(originalName, StringComparison.OrdinalIgnoreCase));
             if (!possibleProblems.Any())
             {
                 return originalName;
@@ -126,7 +126,7 @@ namespace BrilliantCut.AutomaticLandingPage
             while (modifiedName.Length > 0)
             {
                 modifiedName = modifiedName.Substring(1);
-                if (!facetNames.Any(x => x.FacetName.EndsWith(originalName)))
+                if (!facetNames.Any(x => x.FacetName.EndsWith(originalName, StringComparison.OrdinalIgnoreCase)))
                 {
                     return modifiedName;
                 }
@@ -143,7 +143,7 @@ namespace BrilliantCut.AutomaticLandingPage
 
         private static string GetFacetValueWhenCreatingUrl(IEnumerable<RouteFacetModel> facetNames, string originalName)
         {
-            if (facetNames == null || !facetNames.Any(x => x.FacetName == originalName))
+            if (facetNames == null || !facetNames.Any(x => x.FacetName.Equals(originalName, StringComparison.OrdinalIgnoreCase)))
             {
                 return originalName;
             }
@@ -154,7 +154,7 @@ namespace BrilliantCut.AutomaticLandingPage
         private void SaveIfNotExist(RouteFacetModel facetName)
         {
             var facetNames = GetFacetModels();
-            if (facetNames != null && facetNames.Any(x => x.FacetName == facetName.FacetName))
+            if (facetNames != null && facetNames.Any(x => x.FacetName.Equals(facetName.FacetName, StringComparison.OrdinalIgnoreCase)))
             {
                 return;
             }
