@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Web.Mvc;
+using System.Web.Routing;
+using EPiServer.Core;
 using EPiServer.Data.Dynamic;
 using EPiServer.Framework.Cache;
 using EPiServer.ServiceLocation;
+using EPiServer.Web.Routing;
 
 namespace BrilliantCut.AutomaticLandingPage
 {
@@ -14,11 +19,13 @@ namespace BrilliantCut.AutomaticLandingPage
         public const string RouteFacets = "routeFacets";
         private readonly DynamicDataStoreFactory _dynamicDataStoreFactory;
         private readonly ISynchronizedObjectInstanceCache _objectInstanceCache;
+        private readonly UrlResolver _urlResolver;
 
-        public FacetUrlService(DynamicDataStoreFactory dynamicDataStoreFactory, ISynchronizedObjectInstanceCache objectInstanceCache)
+        public FacetUrlService(DynamicDataStoreFactory dynamicDataStoreFactory, ISynchronizedObjectInstanceCache objectInstanceCache, UrlResolver urlResolver)
         {
             _dynamicDataStoreFactory = dynamicDataStoreFactory;
             _objectInstanceCache = objectInstanceCache;
+            _urlResolver = urlResolver;
         }
 
         public IEnumerable<RouteFacetModel> GetFacetModels()
@@ -38,7 +45,51 @@ namespace BrilliantCut.AutomaticLandingPage
             return allRouteFacetModels;
         }
 
-        internal string GetFilterPath(string partialVirtualPath, IDictionary<RouteFacetModel, HashSet<object>> routeFacets)
+        internal string GetUrl(IContent currentContent, RouteValueDictionary routeValues, string facetType, string facetKeyPath, string facetKey, object facetValue)
+        {
+            var originalRouteFacets = routeValues[RouteFacets] as ConcurrentDictionary<RouteFacetModel, HashSet<object>>;
+
+            var routeFacets = new Dictionary<RouteFacetModel, HashSet<object>>();
+            if (originalRouteFacets != null)
+            {
+                foreach (var routeFacetModel in originalRouteFacets.Keys)
+                {
+                    routeFacets.Add(routeFacetModel, new HashSet<object>());
+                    foreach (var value in originalRouteFacets[routeFacetModel])
+                    {
+                        routeFacets[routeFacetModel].Add(value);
+                    }
+                }
+            }
+
+            var model = routeFacets.Select(x => x.Key).SingleOrDefault(x => x.FacetName == facetKey);
+            if (model != null)
+            {
+                routeFacets[model].Add(facetValue);
+            }
+            else
+            {
+                model = new RouteFacetModel
+                {
+                    FacetName = facetKey,
+                    FacetPath = facetKeyPath,
+                    FacetType = facetType
+                };
+                routeFacets.Add(model, new HashSet<object> { facetValue });
+            }
+
+            string language = null;
+            var languageContent = currentContent as ILocalizable;
+            if (languageContent != null)
+            {
+                language = languageContent.Language.Name;
+            }
+
+            var url = _urlResolver.GetUrl(currentContent.ContentLink, language);
+            return url.Length > 1 ? GetUrl(url.Substring(0, url.Length - 1), routeFacets) : url;
+        }
+
+        internal string GetUrl(string partialVirtualPath, IDictionary<RouteFacetModel, HashSet<object>> routeFacets)
         {
             var path = new StringBuilder(partialVirtualPath);
 
@@ -63,7 +114,7 @@ namespace BrilliantCut.AutomaticLandingPage
             return path.ToString();
         }
 
-        internal string GetFacetValueWhenReadingUrl(IEnumerable<RouteFacetModel> facetNames, string originalName)
+        internal string GetFacetValue(IEnumerable<RouteFacetModel> facetNames, string originalName)
         {
             var possibleProblems = facetNames.Where(x => x.FacetName.EndsWith(originalName));
             if (!possibleProblems.Any())

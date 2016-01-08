@@ -56,7 +56,7 @@ namespace BrilliantCut.AutomaticLandingPage
 
             var facetNames = _facetUrlCreator.GetFacetModels().ToArray();
 
-            var nextSegment = _facetUrlCreator.GetFacetValueWhenReadingUrl(facetNames, segmentPair.Next);
+            var nextSegment = _facetUrlCreator.GetFacetValue(facetNames, segmentPair.Next);
             if (String.IsNullOrEmpty(nextSegment))
             {
                 return routedContet;
@@ -88,7 +88,7 @@ namespace BrilliantCut.AutomaticLandingPage
             }
             else if (currentFacet != null)
             {
-                var facetValue = _facetUrlCreator.GetFacetValueWhenReadingUrl(facetNames, nextSegment);
+                var facetValue = _facetUrlCreator.GetFacetValue(facetNames, nextSegment);
 
                 routeFacets.AddOrUpdate(currentFacet,
                    (key) => new HashSet<object> { facetValue },
@@ -102,7 +102,7 @@ namespace BrilliantCut.AutomaticLandingPage
             segmentContext.RemainingPath = remaining;
 
             var segmentPair = segmentContext.GetNextValue(segmentContext.RemainingPath);
-            nextSegment = _facetUrlCreator.GetFacetValueWhenReadingUrl(facetNames, segmentPair.Next);
+            nextSegment = _facetUrlCreator.GetFacetValue(facetNames, segmentPair.Next);
 
             AddFacetsToSegmentContext(routeFacets, segmentContext, facetNames, nextSegment, segmentPair.Remaining, currentFacet);
         }
